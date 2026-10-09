@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI Chatbot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.1/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="brand">
+    <div class="brand-badge">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v8A2.5 2.5 0 0 1 17.5 16H10l-4.5 4v-4H6.5A2.5 2.5 0 0 1 4 13.5v-8Z"/>
+        <path d="M9 9.2l1 2.1 2.1 1-2.1 1-1 2.1-1-2.1-2.1-1 2.1-1 1-2.1Z" fill="currentColor" stroke="none"/>
+      </svg>
+    </div>
+    <h1>AI Chatbot</h1>
+  </div>
+
+  <button class="new-chat-btn" id="newChat">
+    <svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+    <span>New chat</span>
+  </button>
+
+  <div class="search-box">
+    <svg class="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+    <input id="searchInput" type="search" placeholder="Search chats" autocomplete="off" />
+  </div>
+
+  <div class="sessions-label">Recent</div>
+  <div class="sessions" id="sessions"></div>
+
+  <div class="account-row" id="accountRow"></div>
+
+  <div class="sidebar-footer">
+    <button class="icon-btn" id="themeToggle" title="Toggle theme">
+      <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+      <span>Theme</span>
+    </button>
+    <button class="icon-btn" id="openSettings" title="Settings">
+      <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span>Settings</span>
+    </button>
+  </div>
+</aside>
+
+<div class="modal-overlay" id="settingsModal" hidden>
+  <div class="modal">
+    <h2>System prompt</h2>
+    <p class="desc">Controls how the assistant behaves across all chats. Leave blank to use the default. A persona chosen in the chat header is added on top of this.</p>
+    <textarea id="systemPromptInput" placeholder="e.g. You are a sarcastic pirate who always answers in rhyme."></textarea>
+    <div class="modal-actions">
+      <button id="resetPrompt">Reset to default</button>
+      <button id="cancelSettings">Cancel</button>
+      <button class="primary" id="savePrompt">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="authModal" hidden>
+  <div class="modal auth-modal">
+    <h2 id="authTitle">Sign in</h2>
+    <p class="desc" id="authDesc">Sign in to keep your chats on the server and open them from any device. Chats you made as a guest will be added to your account.</p>
+    <form id="authForm" autocomplete="on">
+      <label class="field">Username
+        <input id="authUser" type="text" autocomplete="username" required minlength="3" maxlength="32" />
+      </label>
+      <label class="field">Password
+        <input id="authPass" type="password" autocomplete="current-password" required minlength="6" />
+      </label>
+      <div class="auth-error" id="authError" hidden></div>
+      <div class="modal-actions">
+        <button type="button" id="authCancel">Cancel</button>
+        <button type="submit" class="primary" id="authSubmit">Sign in</button>
+      </div>
+    </form>
+    <button class="auth-switch" id="authSwitch" type="button">New here? Create an account</button>
+  </div>
+</div>
+
+<div class="main">
+  <header>
+    <div class="header-left">
+      <span id="sessionTitle" class="header-title">New chat</span>
+      <span id="chatTokens" class="header-sub" hidden></span>
+    </div>
+    <div class="header-actions">
+      <label class="persona-select" title="Persona">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <select id="personaSelect"></select>
+      </label>
+      <div class="menu-wrap">
+        <button class="files-btn" id="exportBtn" title="Export this chat">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+          <span>Export</span>
+        </button>
+        <div class="menu" id="exportMenu" hidden>
+          <button data-export="md">Markdown (.md)</button>
+          <button data-export="pdf">PDF (print)</button>
+        </div>
+      </div>
+      <button class="files-btn" id="filesBtn" title="Files in this chat">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M13 2v7h7"/></svg>
+        <span>Files</span>
+        <span class="files-count" id="filesCount" hidden>0</span>
+      </button>
+    </div>
+  </header>
+
+  <aside class="files-panel" id="filesPanel" aria-hidden="true">
+    <div class="files-panel-head">
+      <h3>Files in this chat</h3>
+      <button class="files-close" id="filesClose" title="Close">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="files-panel-body" id="filesBody"></div>
+  </aside>
+
+  <div class="chat-container">
+    <div class="messages" id="messages"></div>
+    <div id="attachmentChip"></div>
+    <div class="input-row">
+      <button class="attach" id="attachBtn" title="Attach a file">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+      </button>
+      <input type="file" id="fileInput" hidden accept=".txt,.md,.csv,.json,.log,.py,.js,.ts,.jsx,.tsx,.java,.c,.cpp,.cs,.html,.css,.yml,.yaml,.xml,.sh,.sql,.pdf,.png,.jpg,.jpeg,.gif,.webp" />
+      <textarea id="input" rows="1" placeholder="Message AI Chatbot..." autofocus></textarea>
+      <button class="attach toggle on" id="toolsBtn" title="Web search & tools: on">
+        <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
+      </button>
+      <button class="attach" id="micBtn" title="Voice input" hidden>
+        <svg class="icon" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4"/></svg>
+      </button>
+      <button class="send" id="send" title="Send">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+      </button>
+    </div>
+    <div class="hint-row" id="hintRow">Enter to send · Shift+Enter for a new line · Attach text, PDF, or image files</div>
+  </div>
+</div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
